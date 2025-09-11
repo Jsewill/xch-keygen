@@ -11,7 +11,7 @@ A very simple cli tool for offline generation of BLS keys for use with the chia-
 First, install rust (https://www.rust-lang.org/tools/install).
 
 ```shell
-git clone https://github.com/jsewill/xch-keygen.git
+git clone https://github.com/Jsewill/xch-keygen.git
 cd xch-keygen
 cargo build --release
 ```
