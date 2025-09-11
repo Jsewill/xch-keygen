@@ -4,7 +4,7 @@ A very simple cli tool for offline generation of BLS keys for use with the chia-
 
 ## Usage
 
-```./xch-keygen [-w <words>]```
+```./xch-keygen [-w <num_words>] [-a <num_addresses>]```
 
 ### Building From Source
 
