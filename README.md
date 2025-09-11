@@ -1,6 +1,6 @@
 # xch-keygen
 
-A very simple cli tool for offline generation of BLS keys for use with the chia-blockchain.
+A very simple cli tool for offline generation of BLS keys for use with the chia-blockchain. It derives all the chia things, including hardened addresses.
 
 ## Usage
 
