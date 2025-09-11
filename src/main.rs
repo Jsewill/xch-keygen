@@ -9,7 +9,9 @@ struct Args {
     #[arg(short, long, help = "Mnemonic seed word count.", value_name = "num_words", value_parser = clap::builder::PossibleValuesParser::new(["12", "24"]))]
     words: Option<String>,
     #[arg(short, long, help = "The number of addresses to generate", value_name = "num_addresses", value_parser = clap::value_parser!(u32))]
-    addresses: Option<u32>
+    addresses: Option<u32>,
+    #[arg(short, long, help = "Index offset from which to begin generating addresses", value_name = "offset", value_parser = clap::value_parser!(u32))]
+    offset: Option<u32>,
 }
 
 use bip39::Mnemonic;
@@ -47,6 +49,7 @@ fn main() {
     let args = Args::parse();
     let words: u8 = args.words.unwrap_or("24".to_string()).parse().unwrap_or(24).into();
     let addresses: u32 = args.addresses.unwrap_or(10);
+    let offset: u32 = args.offset.unwrap_or(0);
 
     // Generate wallet.
     let mnemonic = generate_mnemonic(words);
@@ -69,7 +72,7 @@ fn main() {
         hex::encode(ui.to_bytes()),
     );
     // Print hardened addresses.
-    for i in 0..addresses {
+    for i in offset..offset+addresses {
         let hsyn = hi.derive_hardened(i).derive_synthetic().public_key();
         let hhash: Bytes32 = StandardArgs::curry_tree_hash(hsyn).into();
         let haddr = encode_address(hhash);
@@ -79,7 +82,7 @@ fn main() {
         );
     }
     // Print unhardened addresses.
-    for i in 0..addresses {
+    for i in offset..offset+addresses {
         let usyn = ui.derive_unhardened(i).derive_synthetic();
         let uhash: Bytes32 = StandardArgs::curry_tree_hash(usyn).into();
         let uaddr = encode_address(uhash);
