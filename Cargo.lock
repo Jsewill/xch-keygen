@@ -261,7 +261,7 @@ dependencies = [
  "chia-client",
  "chia-consensus",
  "chia-protocol 0.29.0",
- "chia-puzzle-types 0.29.0",
+ "chia-puzzle-types",
  "chia-secp",
  "chia-serde",
  "chia-sha2 0.29.0",
@@ -345,7 +345,7 @@ checksum = "7bf4d39fc0f72f14ffad4d1bcd4a721ad62057b267b40faeb8f2c9b0d027f31f"
 dependencies = [
  "chia-bls 0.29.0",
  "chia-protocol 0.29.0",
- "chia-puzzle-types 0.29.0",
+ "chia-puzzle-types",
  "chia-puzzles",
  "chia-sha2 0.29.0",
  "chia-traits 0.29.0",
@@ -404,23 +404,6 @@ dependencies = [
  "chia-sha2 0.29.0",
  "clvm-traits 0.29.0",
  "clvm-utils 0.29.0",
- "clvmr",
- "hex-literal",
- "num-bigint",
-]
-
-[[package]]
-name = "chia-puzzle-types"
-version = "0.30.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "67f87ca299284cc2c3d65f941ba8e578d09d5fb34a0d04f931da4a641498d468"
-dependencies = [
- "chia-bls 0.30.0",
- "chia-protocol 0.30.0",
- "chia-puzzles",
- "chia-sha2 0.30.0",
- "clvm-traits 0.30.0",
- "clvm-utils 0.30.0",
  "clvmr",
  "hex-literal",
  "num-bigint",
@@ -649,7 +632,6 @@ version = "0.30.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ec21da342e92b6534503caa7378a31b98a2e776050274158ece94912cb67c607"
 dependencies = [
- "chia-bls 0.30.0",
  "clvm-derive 0.30.0",
  "clvmr",
  "num-bigint",
@@ -2134,7 +2116,6 @@ dependencies = [
  "bip39",
  "chia",
  "chia-protocol 0.30.0",
- "chia-puzzle-types 0.30.0",
  "chia-puzzles",
  "clap",
  "hex",
