@@ -8,7 +8,7 @@ A very simple cli tool for offline generation of BLS keys for use with the chia-
 
 ## Examples
 
-### Generate six wallets, with three derived addresses starting from a random offset between 317 and 5002, writing them to the current directory:
+Generate six wallets, with three derived addresses starting from a random offset between 317 and 5002, writing them to the current directory:
 
 ```shell
 for i in $(shuf -i 317-5002 -n 6 | sort -u); do \
