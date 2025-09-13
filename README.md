@@ -15,6 +15,11 @@ Generate a wallet with with ten addresses derived from indices between 0 and 9.
 ./xch-keygen
 ```
 
+Generate a wallet with with ten addresses derived from every third index starting at 0 (i.e., skipping 2).
+```shell
+./xch-keygen -s 2
+```
+
 Generate a wallet with three addresses derived from random indices between 379 and 1000:
 
 ```shell
