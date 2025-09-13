@@ -10,8 +10,14 @@ struct Args {
     words: Option<String>,
     #[arg(short, long, help = "The number of addresses to generate", value_name = "num_addresses", value_parser = clap::value_parser!(u32))]
     addresses: Option<u32>,
-    #[arg(short, long, help = "Index offset from which to begin generating addresses", value_name = "offset", value_parser = clap::value_parser!(u32))]
+    #[arg(short, long, help = "Address index offset from which to begin generating addresses", value_name = "offset", value_parser = clap::value_parser!(u32))]
     offset: Option<u32>,
+    #[arg(short, long, help = "The number of address indicies to skip between derivations.", value_name = "skip", value_parser = clap::value_parser!(usize), conflicts_with = "random")]
+    skip: Option<usize>,
+    #[arg(short, long, help = "Randomize address indicies. When this is set, -s is ignored, and -o and -m are used to define the range from which a random address value is chosen.")]
+    random: bool,
+    #[arg(short = 'm', long = "max", help = "Maximum address index height, from offset. Overridden by -a if smaller than that value.", value_name = "max_height", value_parser = clap::value_parser!(u32), requires = "random")]
+    height: Option<u32>,
 }
 
 use bip39::Mnemonic;
@@ -24,12 +30,11 @@ use chia::{
     protocol::Bytes32,
 };
 use bech32::{Bech32m, Hrp};
-use rand::{RngCore, SeedableRng};
+use rand::{prelude::*, /*Rng,*/ RngCore, SeedableRng};
 use rand_chacha::ChaCha20Rng;
 
 // Generates a Mnemonic from entropy.
-pub fn generate_mnemonic(words: u8) -> Mnemonic {
-    let mut rng = ChaCha20Rng::from_os_rng();
+pub fn generate_mnemonic(words: u8, rng: &mut ChaCha20Rng) -> Mnemonic {
     let mut entropy: [u8; 32] = [0; 32];
     rng.fill_bytes(&mut entropy);
     let mnemonic = match words {
@@ -50,9 +55,18 @@ fn main() {
     let words: u8 = args.words.unwrap_or("24".to_string()).parse().unwrap_or(24).into();
     let addresses: u32 = args.addresses.unwrap_or(10);
     let offset: u32 = args.offset.unwrap_or(0);
+    let skip: usize = args.skip.unwrap_or(0);
+    let random: bool = args.random;
+    let mut height: u32 = args.height.unwrap_or(offset+addresses);
+
+    if height < offset+addresses {
+        height = offset+addresses;
+    }
+
+    let mut rng = ChaCha20Rng::from_os_rng();
 
     // Generate wallet.
-    let mnemonic = generate_mnemonic(words);
+    let mnemonic = generate_mnemonic(words, &mut rng);
     let msk = SecretKey::from_seed(&mnemonic.to_seed(""));
     let hi = master_to_wallet_hardened_intermediate(&msk);
     let mpk = msk.public_key();
@@ -71,9 +85,22 @@ fn main() {
         hex::encode(ppk.to_bytes()),
         hex::encode(ui.to_bytes()),
     );
+
+    // Get start and end.
+    let mut indices: Vec<u32>;
+    if !random {
+        indices = (offset..offset+addresses*(skip as u32+1)).step_by(skip+1).collect();
+    } else {
+        indices = (offset..height).collect();
+        indices.shuffle(&mut rng);
+        indices = indices.into_iter().take(addresses as usize).collect();
+        indices.sort(); 
+    }
+
+
     // Print hardened addresses.
-    for i in offset..offset+addresses {
-        let hsyn = hi.derive_hardened(i).derive_synthetic().public_key();
+    for i in indices.iter() {
+        let hsyn = hi.derive_hardened(*i).derive_synthetic().public_key();
         let hhash: Bytes32 = StandardArgs::curry_tree_hash(hsyn).into();
         let haddr = encode_address(hhash);
         println!(
@@ -82,8 +109,8 @@ fn main() {
         );
     }
     // Print unhardened addresses.
-    for i in offset..offset+addresses {
-        let usyn = ui.derive_unhardened(i).derive_synthetic();
+    for i in indices.iter() {
+        let usyn = ui.derive_unhardened(*i).derive_synthetic();
         let uhash: Bytes32 = StandardArgs::curry_tree_hash(usyn).into();
         let uaddr = encode_address(uhash);
         println!(

@@ -2110,7 +2110,7 @@ dependencies = [
 
 [[package]]
 name = "xch-keygen"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "bech32",
  "bip39",

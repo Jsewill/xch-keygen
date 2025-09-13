@@ -1,6 +1,6 @@
 [package]
 name = "xch-keygen"
-version = "0.0.1"
+version = "0.0.2"
 description = "A very simple cli tool for offline generation of BLS keys for use with the chia-blockchain. It derives all the chia things, including hardened addresses."
 authors = ["Abraham Sewill <abraham.sewill@proton.me"]
 license = "MIT"
