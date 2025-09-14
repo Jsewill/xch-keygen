@@ -5,7 +5,7 @@ A very simple cli tool for offline generation of BLS keys for use with the chia-
 ## Usage
 
 ```shell
-./xch-keygen [-w <num_words>] [-a <num_addresses>] [-o <offset>] [-s <skip>] [-r [-m <max>]]
+./xch-keygen [-w <num_words>] [-a <num_addresses>] [-o <offset>] [-s <skip>] [-r [-m <max>]] [FILE]
 ```
 
 ## Examples
@@ -24,6 +24,20 @@ Generate a wallet with three addresses derived from random indices between 379 a
 
 ```shell
 ./xch-keygen -a 3 -o 379 -r -m 1000
+```
+
+Derive all the things from existing mnemonic:
+
+```shell
+echo "<mnemonic_phrase>" | ./xch-keygen
+```
+
+```shell
+./xch-keygen <(echo "<mnemonic_phrase>")
+```
+
+```shell
+./xch-keygen <mnemonic_phrase_file>
 ```
 
 Generate six wallets, with three derived addresses starting from a random offset between 317 and 5002, writing them to the current directory:

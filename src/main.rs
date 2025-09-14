@@ -6,7 +6,11 @@ use clap::Parser;
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Args {
-    #[arg(short, long, help = "Mnemonic seed word count.", value_name = "num_words", value_parser = clap::builder::PossibleValuesParser::new(["12", "24"]))]
+    #[arg(value_name = "FILE")]
+    path: Option<PathBuf>,
+    #[arg(short, long, help = "Prompt for mnemonic seed phrase from which to derive the wallet.")]
+    phrase: bool,
+    #[arg(short, long, help = "Mnemonic seed phrase word count.", value_name = "num_words", value_parser = clap::builder::PossibleValuesParser::new(["12", "24"]))]
     words: Option<String>,
     #[arg(short, long, help = "The number of addresses to generate", value_name = "num_addresses", value_parser = clap::value_parser!(u32))]
     addresses: Option<u32>,
@@ -20,6 +24,11 @@ struct Args {
     height: Option<u32>,
 }
 
+use std::{
+    io::{self, prelude::*, IsTerminal, Write},
+    fs::File,
+    path::PathBuf
+};
 use bip39::Mnemonic;
 use chia::{
     bls::{
@@ -52,6 +61,8 @@ pub fn encode_address(puzzle_hash: Bytes32) -> String {
 
 fn main() {
     let args = Args::parse();
+    let path: PathBuf = args.path.unwrap_or(PathBuf::new());
+    let phrase: bool = args.phrase;
     let words: u8 = args.words.unwrap_or("24".to_string()).parse().unwrap_or(24).into();
     let addresses: u32 = args.addresses.unwrap_or(10);
     let offset: u32 = args.offset.unwrap_or(0);
@@ -66,7 +77,40 @@ fn main() {
     let mut rng = ChaCha20Rng::from_os_rng();
 
     // Generate wallet.
-    let mnemonic = generate_mnemonic(words, &mut rng);
+    let stdin = io::stdin();
+    let mut stdout = io::stdout();
+    let mut input = String::new();
+    // Generate mnemonic phrase.
+    let mut mnemonic: Mnemonic = generate_mnemonic(words, &mut rng);
+
+    // Read from input file; whether file descriptor, or final parameter.
+    let file_result = File::open(path);
+    if file_result.is_ok() {
+        let mut file = file_result.unwrap();
+        file.read_to_string(&mut input).unwrap();
+    }
+    if input.is_empty() {
+        if phrase {
+            // Read phrase from stdin.
+            print!("Enter mnemonic seed phrase (return to skip): ");
+            stdout.flush().unwrap();
+            io::stdin().read_line(&mut input).unwrap();
+        }
+        if !stdin.is_terminal() {
+            // Check for input and get phrase.
+            io::stdin().read_line(&mut input).unwrap();
+        }
+    }
+    if !input.is_empty() {
+        input = input.to_lowercase();
+        let split = input.split_whitespace();
+        let sc = split.count();
+        // If supplied string word count is supported, attempt to parse it.
+        if sc == 12 || sc == 24 {
+            mnemonic = Mnemonic::parse(&input).expect("Couldn't parse mnemonic phrase.");
+        }
+    }
+    // Derive wallet.
     let msk = SecretKey::from_seed(&mnemonic.to_seed(""));
     let hi = master_to_wallet_hardened_intermediate(&msk);
     let mpk = msk.public_key();
