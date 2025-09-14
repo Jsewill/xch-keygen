@@ -26,15 +26,27 @@ Generate a wallet with three addresses derived from random indices between 379 a
 ./xch-keygen -a 3 -o 379 -r -m 1000
 ```
 
-Derive all the things from existing mnemonic:
+#### Derive all the things from existing mnemonic:
+
+Prompt for mnemonic:
+
+```shell
+./xch-keygen -p
+```
+
+Pipe:
 
 ```shell
 echo "<mnemonic_phrase>" | ./xch-keygen
 ```
 
+File descriptor stdin:
+
 ```shell
 ./xch-keygen <(echo "<mnemonic_phrase>")
 ```
+
+Plain file path:
 
 ```shell
 ./xch-keygen <mnemonic_phrase_file>
