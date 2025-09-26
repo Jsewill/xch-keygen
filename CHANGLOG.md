@@ -6,7 +6,7 @@
 
 - Quiet: `-q --quiet`
 - Export to wallet application: `-e --export`
- - Export private or public keys to Sage wallet and/or the Chia reference wallet via their respective RPC interfaces.
+  - Export private or public keys to Sage wallet and/or the Chia reference wallet via their respective RPC interfaces.
 - Enable fingerprint derived wallet naming: `--enable-naming`
 - Added Master Private Key and Farmer Private Key to output.
 
@@ -19,10 +19,10 @@
 ### Added
 
 - Derivation from existing mnemonic phrase by:
- - File path: `./xch-keygen [...] [FILE]`.
- - Prompt: `-p --phrase`.
- - stdin/pipe.
- - File descriptor style redirection: `./xch-keygen <(echo "<mnemonic_seed_phrase>")`.
+  - File path: `./xch-keygen [...] [FILE]`.
+  - Prompt: `-p --phrase`.
+  - stdin/pipe.
+  - File descriptor style redirection: `./xch-keygen <(echo "<mnemonic_seed_phrase>")`.
 
 ## [0.0.2] - 2025-09-12
 
