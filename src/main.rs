@@ -33,7 +33,7 @@ struct Args {
 }
 
 use std::{
-    fs::File, io::{self, prelude::*, IsTerminal, Write}, net::TcpStream, path::PathBuf, str::FromStr
+    cmp, fs::File, io::{self, prelude::*, IsTerminal, Write}, net::TcpStream, path::PathBuf, str::FromStr
 };
 use dirs;
 use serde_json;
@@ -58,7 +58,7 @@ use xch_keygen::chia_rpc;
 
 // Format string for address rows.
 macro_rules! ROW_FMT {
-    () => { "{:<col_1_width$} {:<12} {:<63} {:<97}" };
+    () => { "{:<col_1_width$} {:<11} {:<63} {:<97}" };
 }
 
 // Generates a Mnemonic from entropy.
@@ -277,7 +277,8 @@ fn main() {
 
     // Get the number of digits of the largest number.
     let mut c1w: u32 = 1000;
-    c1w = indices.last().unwrap_or(&c1w).checked_ilog10().unwrap_or(3) + 1;
+    c1w = indices.last().unwrap_or(&c1w).checked_ilog10().unwrap_or(2) + 1;
+    c1w = cmp::max(c1w, 3);
     // Print hardened addresses.
     println!(ROW_FMT!(),
         "ID","Type","Address","Public Key",
