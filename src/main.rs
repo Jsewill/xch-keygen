@@ -56,6 +56,11 @@ use native_tls::{Identity, TlsConnector};
 use tungstenite::{self, http::Uri, stream::MaybeTlsStream};
 use xch_keygen::chia_rpc;
 
+// Format string for address rows.
+macro_rules! ROW_FMT {
+    () => { "{:<col_1_width$} {:<12} {:<63} {:<97}" };
+}
+
 // Generates a Mnemonic from entropy.
 pub fn generate_mnemonic(words: u8, rng: &mut ChaCha20Rng) -> Mnemonic {
     let mut entropy: [u8; 32] = [0; 32];
@@ -270,14 +275,22 @@ fn main() {
         hex::encode(ui.to_bytes()),
     );
 
+    // Get the number of digits of the largest number.
+    let mut c1w: u32 = 1000;
+    c1w = indices.last().unwrap_or(&c1w).checked_ilog10().unwrap_or(3) + 1;
     // Print hardened addresses.
+    println!(ROW_FMT!(),
+        "ID","Type","Address","Public Key",
+        col_1_width=&c1w.try_into().unwrap_or(4),
+    );
     for i in indices.iter() {
         let hsyn = hi.derive_hardened(*i).derive_synthetic().public_key();
         let hhash: Bytes32 = StandardArgs::curry_tree_hash(hsyn).into();
         let haddr = encode_address(hhash);
         println!(
-            "Hardened Address {}: {}",
-            i, haddr
+            ROW_FMT!(),
+            i, "Hardened", haddr, hex::encode(hsyn.to_bytes()),
+            col_1_width=&c1w.try_into().unwrap_or(4),
         );
     }
     // Print unhardened addresses.
@@ -286,8 +299,9 @@ fn main() {
         let uhash: Bytes32 = StandardArgs::curry_tree_hash(usyn).into();
         let uaddr = encode_address(uhash);
         println!(
-            "Address {}: {}",
-            i, uaddr
+            ROW_FMT!(),
+            i, "Unhardened", uaddr, hex::encode(usyn.to_bytes()),
+            col_1_width=&c1w.try_into().unwrap_or(4),
         );
     }
 }

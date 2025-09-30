@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.0.5] - 2025-09-30
+
+- Added public keys used for each address to output.
+- Updated output formmatting.
+
 ## [0.0.4] - 2025-09-26
 
 ### Added
