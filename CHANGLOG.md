@@ -2,6 +2,8 @@
 
 ## [0.0.5] - 2025-09-30
 
+### Added
+
 - Added public keys used for each address to output.
 - Updated output formmatting.
 
