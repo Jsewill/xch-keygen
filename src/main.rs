@@ -1,7 +1,7 @@
 // Copyright 2025 Abraham Sewill <abraham.sewill@proton.me>
 // SPDX-License-Identifier: MIT
 
-use clap::Parser;
+use clap::{builder::TypedValueParser, Parser};
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -10,8 +10,8 @@ struct Args {
     path: Option<PathBuf>,
     #[arg(short, long, help = "Prompt for mnemonic seed phrase from which to derive the wallet.")]
     phrase: bool,
-    #[arg(short, long, help = "Mnemonic seed phrase word count.", value_name = "num_words", value_parser = clap::builder::PossibleValuesParser::new(["12", "24"]))]
-    words: Option<String>,
+    #[arg(short, long, help = "Mnemonic seed phrase word count.", value_name = "num_words", value_parser = clap::builder::PossibleValuesParser::new(["12", "24"]).map(|s| s.parse::<u8>().unwrap()))]
+    words: Option<u8>,
     #[arg(short, long, help = "The number of addresses to generate", value_name = "num_addresses", value_parser = clap::value_parser!(u32))]
     addresses: Option<u32>,
     #[arg(short, long, help = "Address index offset from which to begin generating addresses", value_name = "offset", value_parser = clap::value_parser!(u32))]
@@ -33,8 +33,8 @@ struct Args {
 }
 
 use std::{
-    cmp, fs::File, io::{self, prelude::*, IsTerminal, Write}, net::TcpStream, path::PathBuf, str::FromStr
-};
+    cmp, fs::File, io::{self, prelude::*, IsTerminal, Write}, net::TcpStream, path::PathBuf, str::FromStr, time::Duration
+ };
 use dirs;
 use serde_json;
 use tokio;
@@ -82,7 +82,7 @@ fn main() {
     let args = Args::parse();
     let path: PathBuf = args.path.unwrap_or(PathBuf::new());
     let phrase: bool = args.phrase;
-    let words: u8 = args.words.unwrap_or("24".to_string()).parse().unwrap_or(24).into();
+    let words: u8 = args.words.unwrap_or(24);
     let addresses: u32 = args.addresses.unwrap_or(10);
     let offset: u32 = args.offset.unwrap_or(0);
     let skip: usize = args.skip.unwrap_or(0);
@@ -167,13 +167,16 @@ fn main() {
 
     // Export to specified wallet application(s).
     let label: &str = fphrase.as_str();
+    let mut runtime: Option<tokio::runtime::Runtime> = None;
     for export in exports {
-        let runtime = tokio::runtime::Builder::new_current_thread()
-                    .enable_all()
-                    .build()
-                    .unwrap();
         match export.as_str() {
             "sage" => {
+                let rt = runtime.get_or_insert_with(|| {
+                    tokio::runtime::Builder::new_current_thread()
+                        .enable_all()
+                        .build()
+                        .unwrap()
+                });
                 let sage_rpc_client = sage_client::Client::new().expect("Failed to set up Sage RPC client.");
                 let ikreq: SageImportKey = SageImportKey {
                     name: label.to_string(),
@@ -183,7 +186,7 @@ fn main() {
                     save_secrets: true,
                     login: false,
                 };
-                runtime.block_on(async {
+                rt.block_on(async {
                     let _resp: Result<SageImportKeyResponse, SageRpcError> =  sage_rpc_client.import_key(ikreq).await;
                 });
             },
@@ -195,10 +198,10 @@ fn main() {
                 let nodepbuf: PathBuf = homepbuf.join(".chia/mainnet/config/ssl/daemon");
                 let crtpbuf: PathBuf = nodepbuf.join("private_daemon.crt");
                 let keypbuf: PathBuf = nodepbuf.join("private_daemon.key");
-                File::open(crtpbuf).expect("Couldn't get chia SSL certificates (.crt).")
-                    .read_to_end(&mut crtbuf).expect("Couldn't read from the chia SSL certificate (.crt) file.");
-                File::open(keypbuf).expect("Couldn't get chia SSL certificates (.key).")
-                    .read_to_end(&mut keybuf).expect("Couldn't read from the chia SSL certificate (.key) file.");
+                File::open(&crtpbuf).expect(&format!("Couldn't open chia SSL certificate file: {}", crtpbuf.display()))
+                    .read_to_end(&mut crtbuf).expect(&format!("Couldn't read from chia SSL certificate file: {}", crtpbuf.display()));
+                File::open(&keypbuf).expect(&format!("Couldn't open chia SSL key file: {}", keypbuf.display()))
+                    .read_to_end(&mut keybuf).expect(&format!("Couldn't read from chia SSL key file: {}", keypbuf.display()));
                 
                 // Build identity and prepare websocket connection.
                 let ident = Identity::from_pkcs8(&crtbuf, &keybuf).expect("Couldn't produce an identity from the chia SSL certificate pair.");
@@ -209,8 +212,12 @@ fn main() {
                     .expect("Failed to build chia rpc websocket request");
                 let uri = Uri::from_str("wss://localhost:55400/").unwrap();
                 // Make the connections
-                let tcps = TcpStream::connect(format!("{}:{}", uri.host().unwrap(), uri.port().unwrap())).expect("Couldn't establish a TCP connection with the chia daemon. Make sure the chia daemon is started.");
-                let tlss = tlsconn.connect(uri.host().unwrap(), tcps).expect("Couldn't establish TLS connection with the chia daemon. Make sure the daemon ssl certificates are present in the chia data directory.");
+                let host = uri.host().unwrap().to_string();
+                let port = uri.port().unwrap().to_string();
+                let tcps = TcpStream::connect(format!("{}:{}", host, port)).expect("Couldn't establish a TCP connection with the chia daemon. Make sure the chia daemon is started.");
+                tcps.set_read_timeout(Some(Duration::from_secs(10))).expect("Couldn't set read timeout on TCP connection.");
+                tcps.set_write_timeout(Some(Duration::from_secs(10))).expect("Couldn't set write timeout on TCP connection.");
+                let tlss = tlsconn.connect(&host, tcps).expect("Couldn't establish TLS connection with the chia daemon. Make sure the daemon ssl certificates are present in the chia data directory.");
                 let tlss = MaybeTlsStream::NativeTls(tlss);
                 // Make the handshake.
                 let req = tungstenite::handshake::client::Request::builder()
