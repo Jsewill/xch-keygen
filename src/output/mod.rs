@@ -21,6 +21,4 @@ pub(crate) use ROW_FMT;
 
 mod wallet;
 
-pub use wallet::build_add_key_command;
-pub use wallet::build_websocket_request;
 pub use wallet::print_wallet;

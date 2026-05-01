@@ -21,7 +21,7 @@ fn main() {
     let naming = args.enable_naming;
     let quiet = args.quiet;
     let label = if naming {
-        derive::fingerprint_name(wallet.fp)
+        derive::fingerprint_name(wallet.fingerprint)
     } else {
         String::new()
     };
