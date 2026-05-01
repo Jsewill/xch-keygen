@@ -1,0 +1,3 @@
+[env]
+CFLAGS = "-Wno-error=discarded-qualifiers -Wno-error=unused-but-set-variable"
+CXXFLAGS = "-Wno-error=discarded-qualifiers"

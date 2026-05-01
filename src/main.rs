@@ -11,7 +11,18 @@ use xch_keygen::derive;
 use xch_keygen::export;
 use xch_keygen::output;
 
+#[cfg(unix)]
+fn reset_sigpipe() {
+    // Restore default SIGPIPE handling so `xch-keygen | head` exits cleanly
+    // instead of panicking on a closed pipe. See rust-lang/rust#46016.
+    unsafe { libc::signal(libc::SIGPIPE, libc::SIG_DFL); }
+}
+
+#[cfg(not(unix))]
+fn reset_sigpipe() {}
+
 fn main() {
+    reset_sigpipe();
     let args = Args::parse();
     let mut rng = ChaCha20Rng::from_os_rng();
 

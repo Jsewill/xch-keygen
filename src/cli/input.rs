@@ -27,10 +27,15 @@ pub fn read_mnemonic(args: &Args, rng: &mut ChaCha20Rng) -> Mnemonic {
         }
     }
 
-    if !input.is_empty() {
-        input = input.to_lowercase();
-        if input.split_whitespace().count() == 12 || input.split_whitespace().count() == 24 {
-            mnemonic = Mnemonic::parse(&input).expect("Couldn't parse mnemonic phrase.");
+    let trimmed = input.trim();
+    if !trimmed.is_empty() {
+        let lower = trimmed.to_lowercase();
+        match Mnemonic::parse(&lower) {
+            Ok(m) => mnemonic = m,
+            Err(e) => {
+                eprintln!("Couldn't parse mnemonic phrase: {e}");
+                std::process::exit(1);
+            }
         }
     }
 
