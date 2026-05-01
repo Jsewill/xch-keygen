@@ -37,7 +37,6 @@ use std::{
  };
 use dirs;
 use serde_json;
-use tokio;
 use bip39::{Language, Mnemonic};
 use chia::{
     bls::{
